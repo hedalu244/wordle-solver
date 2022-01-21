@@ -96,7 +96,7 @@
             opacity: 0;
         }
 
-        button#enter {
+        button {
             border: 0;
             border-radius: 0;
             background: #1a1a1b;
@@ -106,7 +106,7 @@
             margin: 4rem;
         }
 
-        button#enter[disabled] {
+        button[disabled] {
             background: #cacaca;
         }
     </style>
@@ -118,6 +118,8 @@
         <p>Here is a fatal spoiler of <a href="https://www.powerlanguage.co.uk/wordle/">Wordle</a>. If you are to enjoy
             the
             daily game, you should leave.</p>
+        
+        <p><label><input type="checkbox" id="autoplay"> autoplay</label></p>
 
         <table>
             <tr id="input_row">
@@ -164,6 +166,7 @@
             </tr>
         </table>
         <button id="enter" disabled>Enter</button>
+        <button id="reset" style="display:none">Reset</button>
     </div>
 </body>
 
