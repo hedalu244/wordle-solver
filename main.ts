@@ -73,6 +73,6 @@ function run() {
         console.log(`${guess} ${solver.possible_answers.length}\n${result.join("")}`);
 
         solver.update(guess, result);
-        if (result.join() == "2,2,2,2,2") break;;
+        if (guess == answer) break;;
     }
 }

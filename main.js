@@ -64,8 +64,71 @@ function run() {
         const result = wordle(answer, guess);
         console.log(`${guess} ${solver.possible_answers.length}\n${result.join("")}`);
         solver.update(guess, result);
-        if (result.join() == "2,2,2,2,2")
+        if (guess == answer)
             break;
         ;
     }
+}
+function assure(a, b) {
+    if (a instanceof b)
+        return a;
+    throw new TypeError(`${a} is not ${b.name}.`);
+}
+let solver;
+let guess;
+let input_row;
+let result;
+let enter_button;
+addEventListener("load", () => {
+    reset();
+    input_row = assure(document.getElementById("input_row"), HTMLTableRowElement);
+    enter_button = assure(document.getElementById("enter"), HTMLButtonElement);
+    enter_button.disabled = true;
+    enter_button.addEventListener("click", enter);
+    Array.from(document.getElementsByTagName("input")).forEach(x => { if (x.type == "radio")
+        x.onclick = clickRadio; });
+});
+function reset() {
+    solver = new Solver();
+    next();
+}
+function next() {
+    guess = solver.guess();
+    for (let i = 0; i < 5; i++) {
+        assure(document.getElementById("guess" + i), HTMLDivElement).innerText = guess[i];
+    }
+}
+function clickRadio(event) {
+    enter_button.disabled = false;
+    result = [0, 1, 2, 3, 4].map(pos => {
+        var elements = document.getElementsByName("result" + pos);
+        // 選択状態の値を取得
+        for (let i = 0; i < elements.length; i++) {
+            if (elements[i].checked) {
+                assure(document.getElementById("input_cell" + pos), HTMLTableCellElement).className = ["absent", "present", "correct"][parseInt(elements[i].value)];
+                return parseInt(elements[i].value);
+            }
+        }
+        enter_button.disabled = true;
+        return 0;
+    });
+}
+function enter() {
+    for (let pos = 0; pos < 5; pos++) {
+        assure(document.getElementById("input_cell" + pos), HTMLTableCellElement).className = "";
+        document.getElementsByName("result" + pos).forEach(x => assure(x, HTMLInputElement).checked = false);
+    }
+    const tr = document.createElement("tr");
+    for (let pos = 0; pos < 5; pos++) {
+        const td = document.createElement("td");
+        td.innerHTML = `<div class="letter">${guess[pos]}</div>`;
+        td.className = ["absent", "present", "correct"][result[pos]];
+        tr.appendChild(td);
+    }
+    input_row.parentElement?.insertBefore(tr, input_row);
+    solver.update(guess, result);
+    if (solver.possible_answers.length == 0)
+        alert("No matching answer in the word list. Sorry.");
+    if (result.join() != "2,2,2,2,2")
+        next();
 }

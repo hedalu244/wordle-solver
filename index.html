@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="main.js"></script>
+    <title>Wordle Solver</title>
+    <style>
+        html {
+            font-family: 'Clear Sans', 'Helvetica Neue', Arial, sans-serif;
+            font-size: 10px;
+        }
+
+        h1 {
+            font-size: 5rem;
+        }
+
+        p {
+            font-size: 2rem;
+        }
+
+        #container {
+            display: flex;
+            align-items: center;
+            flex-direction: column;
+            width: 80%;
+            margin: auto;
+        }
+
+        table {
+            border-spacing: 0.5rem;
+        }
+
+        td {
+            width: 9rem;
+            height: 9rem;
+            vertical-align: middle;
+            color: #1a1a1b;
+            text-align: center;
+            position: relative;
+            border: 1px solid #cacaca;
+        }
+
+        td.absent {
+            background-color: #787c7e;
+            color: white;
+        }
+
+        td.present {
+            background-color: #c9b458;
+            color: white;
+        }
+
+        td.correct {
+            background-color: #6aaa64;
+            color: white;
+        }
+
+        td div.letter {
+            font-size: 3rem;
+            line-height: 3rem;
+            text-transform: uppercase;
+            vertical-align: middle;
+            font-weight: bold;
+        }
+
+        td div.radios {
+            position: absolute;
+            bottom: 0.5rem;
+            left: 0;
+            right: 0;
+        }
+
+        td label {
+            display: inline-block;
+            width: 2rem;
+            height: 2rem;
+            border-radius: 50%;
+        }
+
+        td label:nth-of-type(1) {
+            background-color: #787c7e;
+        }
+
+        td label:nth-of-type(2) {
+            background-color: #c9b458;
+        }
+
+        td label:nth-of-type(3) {
+            background-color: #6aaa64;
+        }
+
+        td input[type=radio] {
+            opacity: 0;
+        }
+
+        button#enter {
+            border: 0;
+            border-radius: 0;
+            background: #1a1a1b;
+            color: white;
+            font-size: 2rem;
+            padding: 1rem;
+            margin: 4rem;
+        }
+
+        button#enter[disabled] {
+            background: #cacaca;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="container">
+        <h1>WORDLE SOLVER</h1>
+        <p>Here is a fatal spoiler of <a href="https://www.powerlanguage.co.uk/wordle/">Wordle</a>. If you are to enjoy
+            the
+            daily game, you should leave.</p>
+
+        <table>
+            <tr id="input_row">
+                <td id="input_cell0">
+                    <div id="guess0" class="letter"></div>
+                    <div class="radios">
+                        <label><input type="radio" name="result0" value="0"></label>
+                        <label><input type="radio" name="result0" value="1"></label>
+                        <label><input type="radio" name="result0" value="2"></label>
+                    </div>
+                </td>
+                <td id="input_cell1">
+                    <div id="guess1" class="letter"></div>
+                    <div class="radios">
+                        <label><input type="radio" name="result1" value="0"></label>
+                        <label><input type="radio" name="result1" value="1"></label>
+                        <label><input type="radio" name="result1" value="2"></label>
+                    </div>
+                </td>
+                <td id="input_cell2">
+                    <div id="guess2" class="letter"></div>
+                    <div class="radios">
+                        <label><input type="radio" name="result2" value="0"></label>
+                        <label><input type="radio" name="result2" value="1"></label>
+                        <label><input type="radio" name="result2" value="2"></label>
+                    </div>
+                </td>
+                <td id="input_cell3">
+                    <div id="guess3" class="letter"></div>
+                    <div class="radios">
+                        <label><input type="radio" name="result3" value="0"></label>
+                        <label><input type="radio" name="result3" value="1"></label>
+                        <label><input type="radio" name="result3" value="2"></label>
+                    </div>
+                </td>
+                <td id="input_cell4">
+                    <div id="guess4" class="letter"></div>
+                    <div class="radios">
+                        <label><input type="radio" name="result4" value="0"></label>
+                        <label><input type="radio" name="result4" value="1"></label>
+                        <label><input type="radio" name="result4" value="2"></label>
+                    </div>
+                </td>
+            </tr>
+        </table>
+        <button id="enter" disabled>Enter</button>
+    </div>
+</body>
+
+</html>
