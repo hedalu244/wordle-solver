@@ -10,19 +10,69 @@ function wordle(answer: string, guess: string): letter_result[] {
 }
 
 class Solver {
-    guesses: { guess: string, joined_result: string; }[];
+    possible_answers: string[];
 
     constructor() {
-        this.guesses = [];
+        this.possible_answers = [...answers];
     }
 
-    // 結果をもとに情報を更新
+    // 結果をもとに候補を絞る
     update(guess: string, result: letter_result[]) {
-        this.guesses.push({ guess, joined_result: result.join() });
+        this.possible_answers = this.possible_answers.filter(answer => wordle(answer, guess).join() == result.join());
     }
 
-    // 候補が条件に合うか
-    match(option: string): boolean {
-        return this.guesses.every((pair) => wordle(option, pair.guess).join() == pair.joined_result);
+    // guessをした時に得られる情報量でスコア付けする
+    score(guess: string): number {
+        // 返ってくる結果の各確率を求める
+        const counts: Map<string, number> = new Map();
+
+        this.possible_answers.forEach(answer => {
+            const joined_result = wordle(answer, guess).join();
+            counts.set(joined_result, (counts.get(joined_result) || 0) + 1);
+        });
+
+        // 得られる情報量の期待値を計算する
+        return Array.from(counts.entries()).reduce((sum, pair): number => {
+            const p = pair[1] / this.possible_answers.length;
+            return sum += -Math.log(p) * p;
+        }, 0);
+    }
+
+    // 最良の質問を選ぶ
+    guess() {
+        // 最初の質問は前計算した中からランダムに
+        if (this.possible_answers.length == answers.length)
+            return first_guess[Math.floor(Math.random() * first_guess.length)];
+        // 確定したらそれを言うだけ
+        if (this.possible_answers.length == 1)
+            return this.possible_answers[0];
+        // arrowedの中から最良スコアを持つ単語を返す
+        let max = 0;
+        let best_guess = arrowed[0];
+        arrowed.forEach((guess) => {
+            const score = this.score(guess);
+            if (max < score) {
+                max = score;
+                best_guess = guess;
+            }
+        });
+        return best_guess;
+    }
+}
+
+function run() {
+    const answer = answers[Math.floor(Math.random() * answers.length)];
+    console.log(`answer: ${answer}`);
+
+    const solver = new Solver();
+
+    for (let i = 1; ; i++) {
+        const guess = solver.guess();
+        const result = wordle(answer, guess);
+
+        console.log(`${guess} ${solver.possible_answers.length}\n${result.join("")}`);
+
+        solver.update(guess, result);
+        if (result.join() == "2,2,2,2,2") break;;
     }
 }
