@@ -47,7 +47,7 @@ class Solver {
         let best_guess = arrowed[0];
         arrowed.forEach((guess) => {
             const score = this.score(guess);
-            if (max < score) {
+            if (max < score || this.possible_answers.includes(guess) && max == score) {
                 max = score;
                 best_guess = guess;
             }
