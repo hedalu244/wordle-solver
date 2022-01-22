@@ -75,14 +75,13 @@ function assure(a, b) {
     throw new TypeError(`${a} is not ${b.name}.`);
 }
 let solver;
-let guess;
 let input_row;
-let result;
 let enter_button;
 let reset_button;
 let autoplay_switch;
 let autoplay;
 let auto_answer;
+let timeoutID;
 addEventListener("load", () => {
     input_row = assure(document.getElementById("input_row"), HTMLTableRowElement);
     enter_button = assure(document.getElementById("enter"), HTMLButtonElement);
@@ -92,8 +91,11 @@ addEventListener("load", () => {
     enter_button.addEventListener("click", enter);
     reset_button.addEventListener("click", reset);
     autoplay_switch.addEventListener("click", clickAutoplay);
-    Array.from(document.getElementsByTagName("input")).forEach(x => { if (x.type == "radio")
-        x.onclick = clickRadio; });
+    for (let i = 0; i < 5; i++)
+        for (let j = 0; j < 3; j++)
+            assure(document.getElementById("result" + i + "_" + j), HTMLInputElement).onchange = () => changeRadio(i);
+    for (let i = 0; i < 5; i++)
+        assure(document.getElementById("guess" + i), HTMLInputElement).onchange = changeGuess;
     reset();
 });
 function reset() {
@@ -103,64 +105,67 @@ function reset() {
             tbody.removeChild(element);
     });
     solver = new Solver();
-    if (autoplay) {
-        auto_answer = answers[Math.floor(answers.length * Math.random())];
-        next();
-    }
-    else {
-        input_row.style.display = "table-row";
-        enter_button.style.display = "block";
-        reset_button.style.display = "none";
-        next();
-    }
+    input_row.style.display = "";
+    enter_button.style.display = "block";
+    reset_button.style.display = "none";
+    next();
 }
 function next() {
-    guess = solver.guess();
-    for (let i = 0; i < 5; i++) {
-        assure(document.getElementById("guess" + i), HTMLDivElement).innerText = guess[i];
+    const guess = solver.guess();
+    for (let pos = 0; pos < 5; pos++) {
+        assure(document.getElementById("guess" + pos), HTMLInputElement).value = guess[pos];
     }
-    if (autoplay)
-        autoEnter();
 }
-function clickRadio() {
-    enter_button.disabled = false;
-    result = [0, 1, 2, 3, 4].map(pos => {
-        var elements = document.getElementsByName("result" + pos);
-        // 選択状態の値を取得
-        for (let i = 0; i < elements.length; i++) {
-            if (elements[i].checked) {
-                assure(document.getElementById("input_cell" + pos), HTMLTableCellElement).className = ["absent", "present", "correct"][parseInt(elements[i].value)];
-                return parseInt(elements[i].value);
-            }
-        }
-        enter_button.disabled = true;
-        return 0;
-    });
+function changeGuess() {
+    enter_button.disabled = getInputedGuess() == null || getInputedResult() == null;
+}
+function changeRadio(pos) {
+    assure(document.getElementById("input_cell" + pos), HTMLTableCellElement).className = "";
+    enter_button.disabled = getInputedGuess() == null || getInputedResult() == null;
+}
+function getInputedGuess() {
+    const guess = [0, 1, 2, 3, 4].map(pos => assure(document.getElementById("guess" + pos), HTMLInputElement).value).join("").toLowerCase();
+    if (/^[a-z]{5}$/.test(guess))
+        return guess;
+    else
+        return null;
+}
+function getInputedResult() {
+    const result = [0, 0, 0, 0, 0];
+    for (let pos = 0; pos < 5; pos++) {
+        let elements = document.getElementsByName("result" + pos);
+        let value;
+        for (let i = 0; i < elements.length; i++)
+            if (elements[i].checked)
+                value = parseInt(elements[i].value);
+        if (value == undefined)
+            return null;
+        else
+            result[pos] = value;
+    }
+    return result;
 }
 function clickAutoplay() {
     if (autoplay_switch.checked) {
+        autoplay = true;
         auto_answer = solver.possible_answers[Math.floor(solver.possible_answers.length * Math.random())];
         enter_button.style.display = "none";
         reset_button.style.display = "none";
         input_row.style.display = "none";
-        autoplay = true;
-        autoEnter();
+        //result = wordle(auto_answer, guess);
+        autoplayLoop();
     }
     else {
-        reset();
         autoplay = false;
+        clearTimeout(timeoutID);
+        reset();
     }
 }
-function autoEnter() {
-    result = wordle(auto_answer, guess);
-    enter();
-}
-function enter() {
-    for (let pos = 0; pos < 5; pos++) {
-        assure(document.getElementById("input_cell" + pos), HTMLTableCellElement).className = "";
-        document.getElementsByName("result" + pos).forEach(x => assure(x, HTMLInputElement).checked = false);
-    }
-    enter_button.disabled = true;
+function autoplayLoop() {
+    const guess = solver.guess();
+    const result = wordle(auto_answer, guess);
+    solver.update(guess, result);
+    // 自動計算のguessとresultを確定したものとして前の行に追加
     const tr = document.createElement("tr");
     for (let pos = 0; pos < 5; pos++) {
         const td = document.createElement("td");
@@ -169,28 +174,58 @@ function enter() {
         tr.appendChild(td);
     }
     input_row.parentElement?.insertBefore(tr, input_row);
-    solver.update(guess, result);
-    if (autoplay) {
-        if (result.join() == "2,2,2,2,2") {
-            setTimeout(reset, 2000);
-        }
-        else {
-            setTimeout(next, 500);
-        }
+    if (guess == auto_answer) {
+        if (autoplay)
+            timeoutID = setTimeout(() => {
+                const tbody = input_row.parentElement;
+                Array.from(tbody.children).forEach(element => {
+                    if (element !== input_row)
+                        tbody.removeChild(element);
+                });
+                solver = new Solver();
+                auto_answer = answers[Math.floor(Math.random() * answers.length)];
+                autoplayLoop();
+            }, 2000);
     }
     else {
-        if (result.join() == "2,2,2,2,2") {
-            input_row.style.display = "none";
-            enter_button.style.display = "none";
-            reset_button.style.display = "block";
-        }
-        else if (solver.possible_answers.length == 0) {
-            alert("No matching answer in the word list. Sorry.");
-            input_row.style.display = "none";
-            enter_button.style.display = "none";
-            reset_button.style.display = "block";
-        }
-        else
-            next();
+        if (autoplay)
+            timeoutID = setTimeout(autoplayLoop, 500);
+    }
+}
+function enter() {
+    // 入力を得てsolverを更新
+    const guess = getInputedGuess();
+    const result = getInputedResult();
+    if (guess == null || result == null)
+        return;
+    solver.update(guess, result);
+    // 入力されたguessとresultを確定したものとして前の行に追加
+    const tr = document.createElement("tr");
+    for (let pos = 0; pos < 5; pos++) {
+        const td = document.createElement("td");
+        td.innerHTML = `<div class="letter">${guess[pos]}</div>`;
+        td.className = ["absent", "present", "correct"][result[pos]];
+        tr.appendChild(td);
+    }
+    input_row.parentElement?.insertBefore(tr, input_row);
+    // input_row を初期化
+    for (let pos = 0; pos < 5; pos++) {
+        assure(document.getElementById("input_cell" + pos), HTMLTableCellElement).className = "blank";
+        document.getElementsByName("result" + pos).forEach(x => assure(x, HTMLInputElement).checked = false);
+    }
+    enter_button.disabled = true;
+    input_row.style.display = "none";
+    if (result.join() == "2,2,2,2,2") {
+        enter_button.style.display = "none";
+        reset_button.style.display = "block";
+    }
+    else if (solver.possible_answers.length == 0) {
+        alert("No matching answer in the word list. Sorry.");
+        enter_button.style.display = "none";
+        reset_button.style.display = "block";
+    }
+    else {
+        next();
+        setTimeout(() => input_row.style.display = "", 1000);
     }
 }
